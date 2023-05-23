@@ -39,7 +39,6 @@ class ColorInfectionGame:
         self.draw_line = False
         self.line_start = (0, 0)
         self.line_end = (0, 0)
-        self.line_color = (0, 0, 0)
 
         self.animation_duration = 3
         self.animation_start_time = 0
@@ -100,7 +99,7 @@ class ColorInfectionGame:
                 pygame.draw.circle(self.screen, color, (x, y), radius)
 
             if self.selected_dot is not None and self.draw_line:
-                pygame.draw.line(self.screen, self.line_color, self.line_start, pygame.mouse.get_pos(), 2)
+                pygame.draw.line(self.screen, self.selected_dot[2], self.line_start, pygame.mouse.get_pos(), 2)
 
         if self.victory:
             pygame.draw.rect(self.screen, (0, 0, 0), self.victory_button)
