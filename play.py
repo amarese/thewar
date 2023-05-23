@@ -1,5 +1,6 @@
 import pygame
 import math
+import time
 
 pygame.init()
 
@@ -7,10 +8,20 @@ width, height = 800, 600
 screen = pygame.display.set_mode((width, height))
 
 dot_radius = 10
-dot_positions = [(100, 100, (255, 0, 0)),  # 빨간색 점
-                 (200, 100, (0, 255, 0)),  # 초록색 점
-                 (100, 200, (0, 0, 255)),  # 파란색 점
-                 (200, 200, (255, 255, 0))]  # 노란색 점
+initial_dot_positions = [
+    (100, 100, (255, 0, 0)),
+    (200, 100, (0, 255, 0)),
+    (100, 200, (0, 255, 255)),
+    (200, 200, (255, 255, 0)),
+    (300, 200, (255, 255, 0)),
+    (300, 300, (0, 0, 255)),
+    (200, 300, (0, 0, 255)),
+    (200, 400, (0, 0, 255)),
+    (300, 400, (255, 255, 0)),
+    (500, 400, (255, 255, 0)),
+    (700, 500, (255, 255, 0)),
+]
+dot_positions = initial_dot_positions
 selected_dot = None
 
 game_started = False
@@ -20,6 +31,13 @@ font = pygame.font.Font(None, 36)
 
 start_button = pygame.Rect(width // 2 - 100, height // 2 - 50, 200, 100)
 victory_button = pygame.Rect(width // 2 - 100, height // 2 - 50, 200, 100)
+
+draw_line = False
+line_start = (0, 0)
+line_end = (0, 0)
+
+animation_duration = 3
+animation_start_time = 0
 
 pygame.display.set_caption("THE War")
 
@@ -38,14 +56,13 @@ while running:
                     if victory_button.collidepoint(mouse_x, mouse_y):
                         game_started = False
                         victory = False
-                        dot_positions = [(100, 100, (255, 0, 0)),
-                                         (200, 100, (0, 255, 0)),
-                                         (100, 200, (0, 0, 255)),
-                                         (200, 200, (255, 255, 0))]
+                        dot_positions = initial_dot_positions
                 else:
                     for x, y, color in dot_positions:
                         if math.sqrt((mouse_x - x) ** 2 + (mouse_y - y) ** 2) <= dot_radius:
                             selected_dot = (x, y, color)
+                            draw_line = True
+                            line_start = (x, y)
                             break
         elif event.type == pygame.MOUSEBUTTONUP:
             if event.button == 1 and game_started and not victory:
@@ -56,6 +73,9 @@ while running:
                             dot_positions[i] = (x, y, selected_dot[2])
                             break
                     selected_dot = None
+                    draw_line = False
+                    line_start = (0, 0)
+                    line_end = (0, 0)
 
     screen.fill((255, 255, 255))
 
@@ -67,20 +87,8 @@ while running:
         for x, y, color in dot_positions:
             pygame.draw.circle(screen, color, (x, y), dot_radius)
 
-        if selected_dot is not None:
-            selected_x, selected_y, selected_color = selected_dot
-            pygame.draw.circle(screen, selected_color, (selected_x, selected_y), dot_radius)
-
-            closest_dot = None
-            closest_distance = float("inf")
-            for x, y, color in dot_positions:
-                distance = math.sqrt((selected_x - x) ** 2 + (selected_y - y) ** 2)
-                if distance < closest_distance and color == selected_color:
-                    closest_distance = distance
-                    closest_dot = (x, y)
-
-            if closest_dot is not None:
-                pygame.draw.line(screen, selected_color, (selected_x, selected_y), closest_dot, 2)
+        if selected_dot is not None and draw_line:
+            pygame.draw.line(screen, selected_dot[2], line_start, pygame.mouse.get_pos(), 2)
 
         colors = set([color for _, _, color in dot_positions])
         if len(colors) == 1:
