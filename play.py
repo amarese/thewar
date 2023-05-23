@@ -2,19 +2,19 @@ import pygame
 import math
 
 initial_dot_positions = [
-    (100, 100, (255, 0, 0)),
-    (200, 100, (0, 255, 0)),
-    (100, 200, (0, 255, 255)),
-    (200, 200, (255, 255, 0)),
-    (300, 200, (255, 255, 0)),
-    (300, 300, (0, 0, 255)),
-    (200, 300, (0, 0, 255)),
-    (200, 400, (0, 0, 255)),
-    (300, 400, (255, 255, 0)),
-    (500, 400, (255, 255, 0)),
-    (700, 500, (255, 255, 0)),
-    (700, 100, (0, 0, 255)),
-    (500, 300, (0, 255, 0)),
+    (100, 100, (255, 0, 0), 5),
+    (200, 100, (0, 255, 0), 10),
+    (100, 200, (0, 255, 255), 10),
+    (200, 200, (255, 255, 0), 5),
+    (300, 200, (255, 255, 0), 7),
+    (300, 300, (0, 0, 255), 4),
+    (200, 300, (0, 0, 255), 10),
+    (200, 400, (0, 0, 255), 1),
+    (300, 400, (255, 255, 0), 3),
+    (500, 400, (255, 255, 0), 3),
+    (700, 500, (255, 255, 0), 3),
+    (700, 100, (0, 0, 255), 9),
+    (500, 300, (0, 255, 0), 10),
 ]
 
 
@@ -25,7 +25,6 @@ class ColorInfectionGame:
         self.width, self.height = 800, 600
         self.screen = pygame.display.set_mode((self.width, self.height))
 
-        self.dot_radius = 10
         self.dot_positions = initial_dot_positions
         self.selected_dot = None
 
@@ -61,8 +60,8 @@ class ColorInfectionGame:
                         if self.victory_button.collidepoint(mouse_x, mouse_y):
                             self.reset_game()
                     else:
-                        for x, y, color in self.dot_positions:
-                            if math.sqrt((mouse_x - x) ** 2 + (mouse_y - y) ** 2) <= self.dot_radius:
+                        for x, y, color, radius in self.dot_positions:
+                            if math.sqrt((mouse_x - x) ** 2 + (mouse_y - y) ** 2) <= radius:
                                 self.selected_dot = (x, y, color)
                                 self.draw_line = True
                                 self.line_start = (x, y)
@@ -71,9 +70,9 @@ class ColorInfectionGame:
                 if event.button == 1 and self.game_started and not self.victory:
                     if self.selected_dot is not None:
                         drop_x, drop_y = pygame.mouse.get_pos()
-                        for i, (x, y, color) in enumerate(self.dot_positions):
-                            if (drop_x - x) ** 2 + (drop_y - y) ** 2 <= self.dot_radius ** 2:
-                                self.dot_positions[i] = (x, y, self.selected_dot[2])
+                        for i, (x, y, color, radius) in enumerate(self.dot_positions):
+                            if (drop_x - x) ** 2 + (drop_y - y) ** 2 <= radius ** 2:
+                                self.dot_positions[i] = (x, y, self.selected_dot[2], radius)
                                 break
                         self.selected_dot = None
                         self.draw_line = False
@@ -84,7 +83,7 @@ class ColorInfectionGame:
         if not self.game_started:
             return
 
-        colors = set([color for _, _, color in self.dot_positions])
+        colors = set([color for _, _, color, _ in self.dot_positions])
         if len(colors) == 1:
             self.victory = True
 
@@ -97,8 +96,8 @@ class ColorInfectionGame:
             self.screen.blit(start_text, (
             self.width // 2 - start_text.get_width() // 2, self.height // 2 - start_text.get_height() // 2))
         else:
-            for x, y, color in self.dot_positions:
-                pygame.draw.circle(self.screen, color, (x, y), self.dot_radius)
+            for x, y, color, radius in self.dot_positions:
+                pygame.draw.circle(self.screen, color, (x, y), radius)
 
             if self.selected_dot is not None and self.draw_line:
                 pygame.draw.line(self.screen, self.line_color, self.line_start, pygame.mouse.get_pos(), 2)
