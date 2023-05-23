@@ -1,13 +1,6 @@
 import pygame
 import math
-import time
 
-pygame.init()
-
-width, height = 800, 600
-screen = pygame.display.set_mode((width, height))
-
-dot_radius = 10
 initial_dot_positions = [
     (100, 100, (255, 0, 0)),
     (200, 100, (0, 255, 0)),
@@ -20,86 +13,118 @@ initial_dot_positions = [
     (300, 400, (255, 255, 0)),
     (500, 400, (255, 255, 0)),
     (700, 500, (255, 255, 0)),
+    (700, 100, (0, 0, 255)),
+    (500, 300, (0, 255, 0)),
 ]
-dot_positions = initial_dot_positions
-selected_dot = None
 
-game_started = False
-victory = False
 
-font = pygame.font.Font(None, 36)
+class ColorInfectionGame:
+    def __init__(self):
+        pygame.init()
 
-start_button = pygame.Rect(width // 2 - 100, height // 2 - 50, 200, 100)
-victory_button = pygame.Rect(width // 2 - 100, height // 2 - 50, 200, 100)
+        self.width, self.height = 800, 600
+        self.screen = pygame.display.set_mode((self.width, self.height))
 
-draw_line = False
-line_start = (0, 0)
-line_end = (0, 0)
+        self.dot_radius = 10
+        self.dot_positions = initial_dot_positions
+        self.selected_dot = None
 
-animation_duration = 3
-animation_start_time = 0
+        self.game_started = False
+        self.victory = False
 
-pygame.display.set_caption("THE War")
+        self.font = pygame.font.Font(None, 36)
 
-running = True
-while running:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-        elif event.type == pygame.MOUSEBUTTONDOWN:
-            if event.button == 1:
-                mouse_x, mouse_y = pygame.mouse.get_pos()
-                if not game_started:
-                    if start_button.collidepoint(mouse_x, mouse_y):
-                        game_started = True
-                elif victory:
-                    if victory_button.collidepoint(mouse_x, mouse_y):
-                        game_started = False
-                        victory = False
-                        dot_positions = initial_dot_positions
-                else:
-                    for x, y, color in dot_positions:
-                        if math.sqrt((mouse_x - x) ** 2 + (mouse_y - y) ** 2) <= dot_radius:
-                            selected_dot = (x, y, color)
-                            draw_line = True
-                            line_start = (x, y)
-                            break
-        elif event.type == pygame.MOUSEBUTTONUP:
-            if event.button == 1 and game_started and not victory:
-                if selected_dot is not None:
-                    drop_x, drop_y = pygame.mouse.get_pos()
-                    for i, (x, y, color) in enumerate(dot_positions):
-                        if (drop_x - x) ** 2 + (drop_y - y) ** 2 <= dot_radius ** 2:
-                            dot_positions[i] = (x, y, selected_dot[2])
-                            break
-                    selected_dot = None
-                    draw_line = False
-                    line_start = (0, 0)
-                    line_end = (0, 0)
+        self.start_button = pygame.Rect(self.width // 2 - 100, self.height // 2 - 50, 200, 100)
+        self.victory_button = pygame.Rect(self.width // 2 - 100, self.height // 2 - 50, 200, 100)
 
-    screen.fill((255, 255, 255))
+        self.draw_line = False
+        self.line_start = (0, 0)
+        self.line_end = (0, 0)
+        self.line_color = (0, 0, 0)
 
-    if not game_started:
-        pygame.draw.rect(screen, (0, 0, 0), start_button)
-        start_text = font.render("Start", True, (255, 255, 255))
-        screen.blit(start_text, (width // 2 - start_text.get_width() // 2, height // 2 - start_text.get_height() // 2))
-    else:
-        for x, y, color in dot_positions:
-            pygame.draw.circle(screen, color, (x, y), dot_radius)
+        self.animation_duration = 3
+        self.animation_start_time = 0
 
-        if selected_dot is not None and draw_line:
-            pygame.draw.line(screen, selected_dot[2], line_start, pygame.mouse.get_pos(), 2)
+        pygame.display.set_caption("THE War")
 
-        colors = set([color for _, _, color in dot_positions])
+    def handle_events(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.running = False
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    mouse_x, mouse_y = pygame.mouse.get_pos()
+                    if not self.game_started:
+                        if self.start_button.collidepoint(mouse_x, mouse_y):
+                            self.game_started = True
+                    elif self.victory:
+                        if self.victory_button.collidepoint(mouse_x, mouse_y):
+                            self.reset_game()
+                    else:
+                        for x, y, color in self.dot_positions:
+                            if math.sqrt((mouse_x - x) ** 2 + (mouse_y - y) ** 2) <= self.dot_radius:
+                                self.selected_dot = (x, y, color)
+                                self.draw_line = True
+                                self.line_start = (x, y)
+                                break
+            elif event.type == pygame.MOUSEBUTTONUP:
+                if event.button == 1 and self.game_started and not self.victory:
+                    if self.selected_dot is not None:
+                        drop_x, drop_y = pygame.mouse.get_pos()
+                        for i, (x, y, color) in enumerate(self.dot_positions):
+                            if (drop_x - x) ** 2 + (drop_y - y) ** 2 <= self.dot_radius ** 2:
+                                self.dot_positions[i] = (x, y, self.selected_dot[2])
+                                break
+                        self.selected_dot = None
+                        self.draw_line = False
+                        self.line_start = (0, 0)
+                        self.line_end = (0, 0)
+
+    def update(self):
+        if not self.game_started:
+            return
+
+        colors = set([color for _, _, color in self.dot_positions])
         if len(colors) == 1:
-            victory = True
+            self.victory = True
 
-    if victory:
-        pygame.draw.rect(screen, (0, 0, 0), victory_button)
-        victory_text = font.render("Victory!", True, (255, 255, 255))
-        screen.blit(victory_text,
-                    (width // 2 - victory_text.get_width() // 2, height // 2 - victory_text.get_height() // 2))
+    def draw(self):
+        self.screen.fill((255, 255, 255))
 
-    pygame.display.flip()
+        if not self.game_started:
+            pygame.draw.rect(self.screen, (0, 0, 0), self.start_button)
+            start_text = self.font.render("Start", True, (255, 255, 255))
+            self.screen.blit(start_text, (
+            self.width // 2 - start_text.get_width() // 2, self.height // 2 - start_text.get_height() // 2))
+        else:
+            for x, y, color in self.dot_positions:
+                pygame.draw.circle(self.screen, color, (x, y), self.dot_radius)
 
-pygame.quit()
+            if self.selected_dot is not None and self.draw_line:
+                pygame.draw.line(self.screen, self.line_color, self.line_start, pygame.mouse.get_pos(), 2)
+
+        if self.victory:
+            pygame.draw.rect(self.screen, (0, 0, 0), self.victory_button)
+            victory_text = self.font.render("Victory!", True, (255, 255, 255))
+            self.screen.blit(victory_text, (
+            self.width // 2 - victory_text.get_width() // 2, self.height // 2 - victory_text.get_height() // 2))
+
+        pygame.display.flip()
+
+    def reset_game(self):
+        self.game_started = False
+        self.victory = False
+        self.dot_positions = initial_dot_positions
+
+    def run(self):
+        self.running = True
+        while self.running:
+            self.handle_events()
+            self.update()
+            self.draw()
+
+        pygame.quit()
+
+
+game = ColorInfectionGame()
+game.run()
